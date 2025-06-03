@@ -1,8 +1,8 @@
 import openmdao.api as om
 import numpy as np
+import time  # Para medir o tempo de execução
 
-# This script sets up an optimization problem using OpenMDAO to minimize the
-
+# Componente da função Goldstein-Price
 class GoldsteinPriceComp(om.ExplicitComponent):
     def setup(self):
         self.add_input('x1', val=0.0)
@@ -10,8 +10,7 @@ class GoldsteinPriceComp(om.ExplicitComponent):
         self.add_output('f', val=0.0)
 
     def setup_partials(self):
-        self.declare_partials('*', '*', method='fd', form='backward',
-                              step=1e-6, step_calc='abs', minimum_step=1e-6)
+        self.declare_partials('*', '*', method='fd')  # Usa diferenças finitas padrão
 
     def compute(self, inputs, outputs):
         x1 = inputs['x1']
@@ -20,34 +19,39 @@ class GoldsteinPriceComp(om.ExplicitComponent):
         B = 30 + (2*x1 - 3*x2)**2 * (18 - 32*x1 + 12*x1**2 + 48*x2 - 36*x1*x2 + 27*x2**2)
         outputs['f'] = A * B
 
-# Set up the optimization problem
+# Criação do problema
 prob = om.Problem()
 model = prob.model
 
 model.add_subsystem('goldstein', GoldsteinPriceComp(), promotes=['*'])
 
-# Design variables and objective
+# Variáveis de design e função objetivo
 model.add_design_var('x1')
 model.add_design_var('x2')
 model.add_objective('f')
 
-# Approximate total derivatives
-model.approx_totals(method='fd', form='backward', step=1e-6)
+# Aproxima derivadas totais com diferenças finitas (default backward, step padrão)
+model.approx_totals()
 
-# Use SLSQP optimizer
+# Otimizador com opções padrão
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['optimizer'] = 'SLSQP'
-prob.driver.options['disp'] = True
 
-# Initialize and run
+# Inicializa e corre
 prob.setup()
 prob.set_val('x1', 4.0)
 prob.set_val('x2', 2.0)
 
+# Medição do tempo de execução
+start_time = time.process_time()
+
 prob.run_driver()
 
-# Output results
-print("\n=== Optimization Result (SLSQP) ===")
+end_time = time.process_time()
+cpu_time = end_time - start_time
+
+# Mostra os resultados
+print("\n=== Optimization Result (Default SLSQP) ===")
 print(f"x1* = {prob.get_val('x1')[0]:.6f}")
 print(f"x2* = {prob.get_val('x2')[0]:.6f}")
 print(f"f*  = {prob.get_val('f')[0]:.6f}")
+print(f"CPU time: {cpu_time:.6f} seconds")
