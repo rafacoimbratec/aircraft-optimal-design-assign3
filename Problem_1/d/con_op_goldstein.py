@@ -32,40 +32,48 @@ class ConstraintComp(om.ExplicitComponent):
     def compute(self, inputs, outputs):
         outputs['constraint'] = -inputs['x1'] - inputs['x2']
 
-# Setup do problema
-prob = om.Problem()
-model = prob.model
+# Lista de condições iniciais
+initial_conditions = [
+    (4.0, 2.0),
+    (1.799960, 0.199973)
+]
 
-model.add_subsystem('goldstein', GoldsteinPriceComp(), promotes=['*'])
-model.add_subsystem('constraint_comp', ConstraintComp(), promotes=['*'])
+for idx, (x1_init, x2_init) in enumerate(initial_conditions, 1):
+    print(f"\n=== Run {idx}: Initial condition (x1, x2) = ({x1_init}, {x2_init}) ===")
+    prob = om.Problem()
+    model = prob.model
 
-# Variáveis de design, objetivo e restrição
-model.add_design_var('x1')
-model.add_design_var('x2')
-model.add_objective('f')
-model.add_constraint('constraint', upper=0.0)  # -x1 - x2 <= 0
+    model.add_subsystem('goldstein', GoldsteinPriceComp(), promotes=['*'])
+    model.add_subsystem('constraint_comp', ConstraintComp(), promotes=['*'])
 
-# Derivadas aproximadas
-model.approx_totals()
+    model.add_design_var('x1')
+    model.add_design_var('x2')
+    model.add_objective('f')
+    model.add_constraint('constraint', upper=0.0)
 
-# Driver default
-prob.driver = om.ScipyOptimizeDriver()
+    model.approx_totals()
 
-# Inicialização
-prob.setup()
-prob.set_val('x1', 1.2)
-prob.set_val('x2', -1.2)
+    prob.driver = om.ScipyOptimizeDriver()
+    prob.driver.options['disp'] = True
 
-# Tempo de CPU
-start_time = time.process_time()
-prob.run_driver()
-end_time = time.process_time()
+    # Print optimizer method and default options
+    print("\nScipyOptimizeDriver method:", prob.driver.options['optimizer'])
+    print("Default ScipyOptimizeDriver options:")
+    for key, value in prob.driver.options.items():
+        print(f"  {key}: {value}")
 
-# Resultados
-print("\n=== Optimization Result with Constraint x1 + x2 ≥ 0 ===")
-print(f"x1* = {prob.get_val('x1')[0]:.6f}")
-print(f"x2* = {prob.get_val('x2')[0]:.6f}")
-print(f"f*  = {prob.get_val('f')[0]:.6f}")
-print(f"Constraint (should be ≤ 0): {-prob.get_val('x1')[0] - prob.get_val('x2')[0]:.6f}")
-print(f"CPU time: {end_time - start_time:.6f} seconds")
+    prob.setup()
+    prob.set_val('x1', x1_init)
+    prob.set_val('x2', x2_init)
+
+    start_time = time.process_time()
+    prob.run_driver()
+    end_time = time.process_time()
+
+    print("\n=== Optimization Result with Constraint x1 + x2 ≥ 0 ===")
+    print(f"x1* = {prob.get_val('x1')[0]:.6f}")
+    print(f"x2* = {prob.get_val('x2')[0]:.6f}")
+    print(f"f*  = {prob.get_val('f')[0]:.6f}")
+    print(f"Constraint (should be ≤ 0): {-prob.get_val('x1')[0] - prob.get_val('x2')[0]:.6f}")
+    print(f"CPU time: {end_time - start_time:.6f} seconds")
 

@@ -36,6 +36,12 @@ model.approx_totals()
 # Otimizador com opções padrão
 prob.driver = om.ScipyOptimizeDriver()
 
+# Print default options for the optimizer
+print("\nScipyOptimizeDriver method:", prob.driver.options['optimizer'])
+print("\nDefault ScipyOptimizeDriver options:")
+for key, value in prob.driver.options.items():
+    print(f"{key}: {value}")
+
 # Inicializa e corre
 prob.setup()
 prob.set_val('x1', 4.0)
@@ -50,7 +56,6 @@ end_time = time.process_time()
 cpu_time = end_time - start_time
 
 # Mostra os resultados
-print("\n=== Optimization Result (Default SLSQP) ===")
 print(f"x1* = {prob.get_val('x1')[0]:.6f}")
 print(f"x2* = {prob.get_val('x2')[0]:.6f}")
 print(f"f*  = {prob.get_val('f')[0]:.6f}")
