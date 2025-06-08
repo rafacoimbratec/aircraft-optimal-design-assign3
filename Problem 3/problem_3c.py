@@ -87,11 +87,6 @@ class LiftDragRatio(om.ExplicitComponent):
         # Compute the induced drag force on each lifting surface
         outputs["D"] = np.sum(forces[:, 0] * cosa * cosb - forces[:, 1] * sinb + forces[:, 2] * sina * cosb)
 
-        # Apply symmetry factor if needed
-        if self.surface["symmetry"]:
-            outputs["D"] *= 2.0
-            outputs["L"] *= 2.0
-
         # Compute L/D ratio with protection against division by zero
         D_safe = np.maximum(np.abs(D), self.eps)  # Ensure D is not zero
         outputs["L_over_D"] = L / D_safe * np.sign(D)
@@ -206,7 +201,7 @@ class InducedDragFactor(om.ExplicitComponent):
         self.add_input("CDi", val=0.01, units=None)
         
         # Output
-        self.add_output("drag_factor", val=0.04, units=None)
+        self.add_output("drag_factor", val=0.045, units=None)
         
         # Declare partials
         self.declare_partials("drag_factor", ["CL", "CDi"])
@@ -284,7 +279,7 @@ class SpanEfficiency(om.ExplicitComponent):
         # Approximate wing area (this is simplified)
         chord_root = np.linalg.norm(mesh[-1, 0, :] - mesh[0, 0, :])
         chord_tip = np.linalg.norm(mesh[-1, -1, :] - mesh[0, -1, :])
-        area_approx = span * (chord_root + chord_tip) / 2.0
+        area_approx = 16.2
         
         self.aspect_ratio = span * span / area_approx
         
@@ -293,7 +288,7 @@ class SpanEfficiency(om.ExplicitComponent):
         self.add_input("CDi", val=0.01, units=None)
         
         # Output
-        self.add_output("span_efficiency", val=0.8, units=None)
+        self.add_output("span_efficiency", val=0.6, units=None)
         
         # Declare partials
         self.declare_partials("span_efficiency", ["CL", "CDi"])

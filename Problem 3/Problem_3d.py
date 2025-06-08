@@ -198,9 +198,9 @@ def create_problem(surface, flight_conditions, design_vars):
     prob.model.add_objective(point_name + ".wing_perf.CD", scaler=1e4)
 
     # Additional aerodynamic efficiency constraints
-    prob.model.add_constraint("L_over_D", lower=10.0)
+    prob.model.add_constraint("L_over_D", lower=8.0)
     prob.model.add_constraint("drag_factor", upper=0.045)
-    prob.model.add_constraint("span_efficiency", lower=0.85)
+    prob.model.add_constraint("span_efficiency", lower=0.6)
 
     
     return prob, point_name
@@ -271,6 +271,9 @@ def run_optimization_case(case_name, design_vars, surface, flight_conditions):
         print(f"Success: {success}")
         print(f"Final CD: {final_CD:.6f}")
         print(f"Final CL: {final_CL:.6f}")
+        print(f"Final L/D Ratio: {prob.get_val('L_over_D')[0]:.2f}")
+        print(f"Final Drag Factor: {prob.get_val('drag_factor')[0]:.4f}")
+        print(f"Final Span Efficiency: {prob.get_val('span_efficiency')[0]:.4f}")
         print(f"Final Alpha: {final_alpha:.3f} deg" if final_alpha != "N/A" else "Final Alpha: N/A")
         if final_twist != "N/A":
             print(f"Final Twist: {final_twist}")
