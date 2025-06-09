@@ -164,14 +164,16 @@ def create_problem(surface, flight_conditions, design_vars):
 
     # Add Induced Drag Factor component
     drag_factor_comp = InducedDragFactor(surface=surface)
-    prob.model.add_subsystem("drag_factor_comp", drag_factor_comp, promotes=["*"])
+    prob.model.add_subsystem("drag_factor_comp", drag_factor_comp, promotes_outputs=["drag_factor"])
+    prob.model.connect(point_name + ".wing_perf.CL", "drag_factor_comp.CL")
+    prob.model.connect(point_name + ".wing_perf.CDi", "drag_factor_comp.CDi")
 
     # Add Span Efficiency component
     span_eff_comp = SpanEfficiency(surface=surface)
-    prob.model.add_subsystem("span_efficiency_comp", span_eff_comp, promotes=["*"])
-    prob.model.connect(point_name + ".wing_perf.CL", "CL")
-    prob.model.connect(point_name + ".wing_perf.CDi", "CDi")
-
+    prob.model.add_subsystem("span_efficiency_comp", span_eff_comp, promotes_outputs=["span_efficiency"])
+    prob.model.connect(point_name + ".wing_perf.CL", "span_efficiency_comp.CL")
+    prob.model.connect(point_name + ".wing_perf.CDi", "span_efficiency_comp.CDi")
+    prob.model.connect(point_name + "." + name + ".S_ref", "span_efficiency_comp.wing_area")
 
     # Setup driver
     prob.driver = om.ScipyOptimizeDriver()
@@ -224,6 +226,13 @@ def run_optimization_case(case_name, design_vars, surface, flight_conditions):
         
         # Run optimization
         prob.run_driver()
+        print(f"Debug values:")
+        print(f"CL: {prob.get_val(point_name + '.wing_perf.CL')[0]:.4f}")
+        print(f"CDi: {prob.get_val(point_name + '.wing_perf.CDi')[0]:.4f}")
+        print(f"CD total: {prob.get_val(point_name + '.wing_perf.CD')[0]:.4f}")
+        print(f"Wing Area: {prob.get_val(point_name + '.wing.S_ref')[0]:.2f} m²")
+        print(f"L: {prob.get_val('L')[0]:.2f} N")
+        print(f"D: {prob.get_val('D')[0]:.2f} N")
         
         # Extract results
         final_alpha = prob.get_val("alpha")[0] if "alpha" in design_vars else "N/A"

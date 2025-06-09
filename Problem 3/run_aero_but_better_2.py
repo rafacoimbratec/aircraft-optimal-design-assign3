@@ -16,13 +16,13 @@ def calculate_flight_conditions():
     T0 = 288.15  # K (sea level temperature)
     p0 = 101325  # Pa (sea level pressure)
     rho0 = 1.225  # kg/m³ (sea level density)
-    L = 0.0065  # K/m (temperature lapse rate)
+    L = 0.00649  # K/m (temperature lapse rate)
     g = 9.80665  # m/s² (gravitational acceleration)
     R = 287.053  # J/(kg·K) (specific gas constant for air)
     
     # Temperature at altitude
     T = T0 - L * cruise_altitude
-    
+
     # Pressure at altitude
     p = p0 * (T / T0) ** (g / (R * L))
     
@@ -56,10 +56,10 @@ def create_rectangular_wing_mesh(wing_span, wing_area, num_y=7, num_x=2):
     b = wing_span  # 11.0 m
     S = wing_area  # 16.2 m²
     
-    # Calculate chord (for rectangular wing, chord is constant)
+    # Calculate chord 
     chord = S / b
     
-    # Create mesh points for half wing (due to symmetry)
+    # Create mesh points for half wing 
     half_span = b / 2
     
     # Create spanwise distribution
@@ -99,17 +99,15 @@ def setup_base_problem():
         # Wing definition
         "name": "wing",  # name of the surface
         "symmetry": True,  # if true, model one half of wing reflected across y = 0
-        "S_ref_type": "projected",  # use projected area (more appropriate for rectangular wing)
+        "S_ref_type": "projected",  # projected area 
         "fem_model_type": "tube",
         "twist_cp": twist_cp,
         "mesh": mesh,
-        
-        # Reference area (should match our wing area)
-        "S_ref": wing_area,
+        "S_ref": wing_area,# Reference area 
         
         # Aerodynamic performance at alpha=0
-        "CL0": 0.0,  # CL of the surface at alpha=0
-        "CD0": 0.008,  # CD of the surface at alpha=0 (reduced for cleaner rectangular wing)
+        "CL0": 0.0,  # CL at alpha=0
+        "CD0": 0.008,  # CD at alpha=0
         
         # Airfoil properties for NACA 2412
         "k_lam": 0.05,  # percentage of chord with laminar flow
@@ -160,6 +158,7 @@ def create_problem(surface, flight_conditions, design_vars):
     prob.driver = om.ScipyOptimizeDriver()
     prob.driver.options["tol"] = 1e-9
     prob.driver.options["optimizer"] = "SLSQP"
+    prob.driver.options["maxiter"] = 500
     
     # Add design variables based on the case
     if "alpha" in design_vars:

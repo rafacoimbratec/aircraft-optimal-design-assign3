@@ -76,20 +76,20 @@ class LiftDragRatio(om.ExplicitComponent):
         # Compute the induced drag force
         D = np.sum(forces[:, 0] * cosa * cosb - forces[:, 1] * sinb + forces[:, 2] * sina * cosb)
 
-        # Apply symmetry factor if needed
+        # Apply symmetry factor 
         if self.surface["symmetry"]:
             L *= 2.0
             D *= 2.0
 
-        # Compute the induced lift force on each lifting surface
-        outputs["L"] = np.sum(-forces[:, 0] * sina + forces[:, 2] * cosa)
-
-        # Compute the induced drag force on each lifting surface
-        outputs["D"] = np.sum(forces[:, 0] * cosa * cosb - forces[:, 1] * sinb + forces[:, 2] * sina * cosb)
+        # Store outputs
+        outputs["L"] = L
+        outputs["D"] = D
 
         # Compute L/D ratio with protection against division by zero
-        D_safe = np.maximum(np.abs(D), self.eps)  # Ensure D is not zero
-        outputs["L_over_D"] = L / D_safe * np.sign(D)
+        if np.abs(D) > self.eps:
+            outputs["L_over_D"] = L / D
+        else:
+            outputs["L_over_D"] = 0.0
 
     def compute_partials(self, inputs, partials):
         """Compute analytical derivatives for lift-to-drag ratio."""
@@ -116,10 +116,6 @@ class LiftDragRatio(om.ExplicitComponent):
         L = symmetry_factor * np.sum(-forces[:, :, 0] * sina + forces[:, :, 2] * cosa)
         D = symmetry_factor * np.sum(forces[:, :, 0] * cosa * cosb - forces[:, :, 1] * sinb + forces[:, :, 2] * sina * cosb)
 
-        # Ensure D is not zero for derivative calculations
-        D_safe = np.maximum(np.abs(D), self.eps)
-        D_sign = np.sign(D)
-
         # Derivatives of L and D with respect to sec_forces
         dL_dforces = np.array([-sina, 0, cosa])
         dD_dforces = np.array([cosa * cosb, -sinb, sina * cosb])
@@ -141,7 +137,6 @@ class LiftDragRatio(om.ExplicitComponent):
         partials["D", "beta"] = dD_dbeta
 
         # Derivatives of L/D ratio using quotient rule: d(L/D)/dx = (dL/dx * D - L * dD/dx) / D^2
-        # But we need to handle the sign correction for negative drag
         
         # L/D derivatives with respect to sec_forces
         dLD_dforces = np.zeros((1, self.num_panels * 3))
@@ -152,7 +147,7 @@ class LiftDragRatio(om.ExplicitComponent):
                 dD_df = dD_dforces[j] * symmetry_factor
                 
                 if np.abs(D) > self.eps:
-                    dLD_dforces[0, idx] = (dL_df * D - L * dD_df) / (D * D) * D_sign
+                    dLD_dforces[0, idx] = (dL_df * D - L * dD_df) / (D * D)
                 else:
                     dLD_dforces[0, idx] = 0.0
         
@@ -160,13 +155,13 @@ class LiftDragRatio(om.ExplicitComponent):
 
         # L/D derivative with respect to alpha
         if np.abs(D) > self.eps:
-            partials["L_over_D", "alpha"] = (dL_dalpha * D - L * dD_dalpha) / (D * D) * D_sign
+            partials["L_over_D", "alpha"] = (dL_dalpha * D - L * dD_dalpha) / (D * D)
         else:
             partials["L_over_D", "alpha"] = 0.0
 
         # L/D derivative with respect to beta
         if np.abs(D) > self.eps:
-            partials["L_over_D", "beta"] = (-L * dD_dbeta) / (D * D) * D_sign
+            partials["L_over_D", "beta"] = (-L * dD_dbeta) / (D * D)
         else:
             partials["L_over_D", "beta"] = 0.0
 
@@ -215,25 +210,22 @@ class InducedDragFactor(om.ExplicitComponent):
         CDi = inputs["CDi"]
         
         # Protect against division by zero
-        CL_safe = np.maximum(np.abs(CL), self.eps)
-        
-        outputs["drag_factor"] = CDi / (CL_safe * CL_safe) * np.sign(CL * CL)
+        if np.abs(CL) > self.eps:
+            outputs["drag_factor"] = CDi / (CL * CL)
+        else:
+            outputs["drag_factor"] = 0.0
 
     def compute_partials(self, inputs, partials):
         """Compute analytical derivatives for drag factor."""
         CL = inputs["CL"]
         CDi = inputs["CDi"]
         
-        # Protect against division by zero
-        CL_safe = np.maximum(np.abs(CL), self.eps)
-        CL_sign = np.sign(CL)
-        
         if np.abs(CL) > self.eps:
             # d(CDi/CL^2)/dCDi = 1/CL^2
-            partials["drag_factor", "CDi"] = 1.0 / (CL_safe * CL_safe)
+            partials["drag_factor", "CDi"] = 1.0 / (CL * CL)
             
             # d(CDi/CL^2)/dCL = -2*CDi/CL^3
-            partials["drag_factor", "CL"] = -2.0 * CDi / (CL_safe * CL_safe * CL_safe) * CL_sign
+            partials["drag_factor", "CL"] = -2.0 * CDi / (CL * CL * CL)
         else:
             partials["drag_factor", "CDi"] = 0.0
             partials["drag_factor", "CL"] = 0.0
@@ -247,6 +239,9 @@ class SpanEfficiency(om.ExplicitComponent):
     e = CL^2 / (π * AR * CDi)
     
     where AR is the aspect ratio and CDi is the induced drag coefficient.
+    
+    IMPORTANT: This component now takes wing area as an input to handle
+    changing wing geometry during optimization.
 
     Parameters
     ----------
@@ -254,8 +249,8 @@ class SpanEfficiency(om.ExplicitComponent):
         Lift coefficient
     CDi : float
         Induced drag coefficient
-    aspect_ratio : float
-        Wing aspect ratio
+    wing_area : float
+        Wing planform area (m²)
 
     Returns
     -------
@@ -269,29 +264,23 @@ class SpanEfficiency(om.ExplicitComponent):
     def setup(self):
         self.surface = self.options["surface"]
         
-        # Calculate aspect ratio from mesh if not provided
+        # Calculate span from mesh (this doesn't change)
         mesh = self.surface["mesh"]
         if self.surface["symmetry"]:
-            span = 2.0 * np.max(mesh[:, :, 1])
+            self.span = 2.0 * np.max(mesh[:, :, 1])
         else:
-            span = np.max(mesh[:, :, 1]) - np.min(mesh[:, :, 1])
+            self.span = np.max(mesh[:, :, 1]) - np.min(mesh[:, :, 1])
         
-        # Approximate wing area (this is simplified)
-        chord_root = np.linalg.norm(mesh[-1, 0, :] - mesh[0, 0, :])
-        chord_tip = np.linalg.norm(mesh[-1, -1, :] - mesh[0, -1, :])
-        area_approx = 16.2
-        
-        self.aspect_ratio = span * span / area_approx
-        
-        # Inputs
+        # Inputs - now including wing area as input
         self.add_input("CL", val=0.5, units=None)
         self.add_input("CDi", val=0.01, units=None)
+        self.add_input("wing_area", val=16.2, units="m**2")
         
         # Output
         self.add_output("span_efficiency", val=0.6, units=None)
         
         # Declare partials
-        self.declare_partials("span_efficiency", ["CL", "CDi"])
+        self.declare_partials("span_efficiency", ["CL", "CDi", "wing_area"])
         
         # Small number to prevent division by zero
         self.eps = 1e-12
@@ -300,29 +289,41 @@ class SpanEfficiency(om.ExplicitComponent):
         """Compute span efficiency factor."""
         CL = inputs["CL"]
         CDi = inputs["CDi"]
+        wing_area = inputs["wing_area"]
+        
+        # Calculate aspect ratio using current wing area
+        aspect_ratio = self.span * self.span / wing_area
         
         # Protect against division by zero
-        CDi_safe = np.maximum(np.abs(CDi), self.eps)
-        
-        # e = CL^2 / (π * AR * CDi)
-        outputs["span_efficiency"] = (CL * CL) / (np.pi * self.aspect_ratio * CDi_safe)
+        if np.abs(CDi) > self.eps and np.abs(wing_area) > self.eps:
+            # e = CL^2 / (π * AR * CDi)
+            outputs["span_efficiency"] = (CL * CL) / (np.pi * aspect_ratio * CDi)
+        else:
+            outputs["span_efficiency"] = 0.0
+            
+        # Debug print
+        #print(f"SpanEff Debug: Span={self.span:.2f}, Area={float(wing_area[0]):.2f}, AR={aspect_ratio:.2f}, "
+             # f"CL={float(CL[0]):.4f}, CDi={float(CDi[0]):.4f}, e={float(outputs['span_efficiency'][0]):.4f}")
 
     def compute_partials(self, inputs, partials):
         """Compute analytical derivatives for span efficiency."""
         CL = inputs["CL"]
         CDi = inputs["CDi"]
+        wing_area = inputs["wing_area"]
         
-        # Protect against division by zero
-        CDi_safe = np.maximum(np.abs(CDi), self.eps)
+        aspect_ratio = self.span * self.span / wing_area
+        denominator = np.pi * aspect_ratio
         
-        denominator = np.pi * self.aspect_ratio
-        
-        if np.abs(CDi) > self.eps:
+        if np.abs(CDi) > self.eps and np.abs(wing_area) > self.eps:
             # de/dCL = 2*CL / (π * AR * CDi)
-            partials["span_efficiency", "CL"] = 2.0 * CL / (denominator * CDi_safe)
+            partials["span_efficiency", "CL"] = 2.0 * CL / (denominator * CDi)
             
             # de/dCDi = -CL^2 / (π * AR * CDi^2)
-            partials["span_efficiency", "CDi"] = -(CL * CL) / (denominator * CDi_safe * CDi_safe)
+            partials["span_efficiency", "CDi"] = -(CL * CL) / (denominator * CDi * CDi)
+            
+            # de/d(wing_area) = CL^2 * span^2 / (π * CDi * wing_area^2)
+            partials["span_efficiency", "wing_area"] = (CL * CL * self.span * self.span) / (np.pi * CDi * wing_area * wing_area)
         else:
             partials["span_efficiency", "CL"] = 0.0
             partials["span_efficiency", "CDi"] = 0.0
+            partials["span_efficiency", "wing_area"] = 0.0
