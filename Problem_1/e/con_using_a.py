@@ -42,10 +42,14 @@ class ConstraintComp(om.ExplicitComponent):
         self.add_input('x1', val=0.0)
         self.add_input('x2', val=0.0)
         self.add_output('constraint', val=0.0)
-        self.declare_partials('*', '*', method='fd')
+        self.declare_partials('constraint', ['x1', 'x2'])  # Use analytic
 
     def compute(self, inputs, outputs):
         outputs['constraint'] = -inputs['x1'] - inputs['x2']
+
+    def compute_partials(self, inputs, partials):
+        partials['constraint', 'x1'] = -1.0
+        partials['constraint', 'x2'] = -1.0
 
 # Initial conditions
 initial_conditions = [

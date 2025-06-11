@@ -9,7 +9,7 @@ class GoldsteinPriceComp(om.ExplicitComponent):
 
         # Output
         self.add_output('f', val=0.0)
-
+        
     def setup_partials(self):
         # Finite difference all partials
         self.declare_partials('*', '*', method='fd', form='backward',
@@ -45,4 +45,4 @@ prob.run_model()
 print(f"f(x1=0, x2=-1) = {prob.get_val('f')}")
 
 # Generate N2 diagram
-om.n2(prob, show_browser=False, outfile='n2_goldstein.html')
+om.n2(prob, show_browser=True, outfile='n2_goldstein.html')
