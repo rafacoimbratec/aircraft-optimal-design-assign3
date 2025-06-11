@@ -43,13 +43,18 @@ class ConstraintComp(om.ExplicitComponent):
         self.add_input('x2', val=0.0)
         self.add_output('constraint', val=0.0)
         self.declare_partials('constraint', ['x1', 'x2'])  # Use analytic
+        self.eval_count = 0  # Counter for function evaluations
 
     def compute(self, inputs, outputs):
         outputs['constraint'] = -inputs['x1'] - inputs['x2']
+        self.eval_count += 1
 
     def compute_partials(self, inputs, partials):
         partials['constraint', 'x1'] = -1.0
         partials['constraint', 'x2'] = -1.0
+
+    def get_eval_count(self):
+        return self.eval_count
 
 # Initial conditions
 initial_conditions = [
@@ -70,7 +75,6 @@ for idx, (x1_init, x2_init) in enumerate(initial_conditions, 1):
     model.add_objective('f')
     model.add_constraint('constraint', upper=0.0)
 
-    # No approx_totals needed since we provide analytic derivatives for f
     prob.driver = om.ScipyOptimizeDriver()
     prob.driver.options['disp'] = True
 
@@ -82,10 +86,13 @@ for idx, (x1_init, x2_init) in enumerate(initial_conditions, 1):
     prob.run_driver()
     end_time = time.process_time()
 
+    # Get constraint function evaluation count
+    constraint_comp = prob.model.constraint_comp
     print("\n=== Optimization Result with Constraint x1 + x2 ≥ 0 ===")
     print(f"x1* = {prob.get_val('x1')[0]:.6f}")
     print(f"x2* = {prob.get_val('x2')[0]:.6f}")
     print(f"f*  = {prob.get_val('f')[0]:.6f}")
     print(f"Constraint (should be ≤ 0): {-prob.get_val('x1')[0] - prob.get_val('x2')[0]:.6f}")
     print(f"CPU time: {end_time - start_time:.6f} seconds")
+    print(f"Constraint function evaluations: {constraint_comp.get_eval_count()}")
 

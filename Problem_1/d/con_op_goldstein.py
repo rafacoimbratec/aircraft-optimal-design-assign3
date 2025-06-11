@@ -25,12 +25,18 @@ class ConstraintComp(om.ExplicitComponent):
         self.add_input('x1', val=0.0)
         self.add_input('x2', val=0.0)
         self.add_output('constraint', val=0.0)
+        self.eval_count = 0  # Counter for function evaluations
 
     def setup_partials(self):
         self.declare_partials('*', '*', method='fd')
 
     def compute(self, inputs, outputs):
         outputs['constraint'] = -inputs['x1'] - inputs['x2']
+        self.eval_count += 1
+
+    # Add a method to get the count
+    def get_eval_count(self):
+        return self.eval_count
 
 # Lista de condições iniciais
 initial_conditions = [
@@ -70,10 +76,13 @@ for idx, (x1_init, x2_init) in enumerate(initial_conditions, 1):
     prob.run_driver()
     end_time = time.process_time()
 
+    # Get constraint function evaluation count
+    constraint_comp = prob.model.constraint_comp
     print("\n=== Optimization Result with Constraint x1 + x2 ≥ 0 ===")
     print(f"x1* = {prob.get_val('x1')[0]:.6f}")
     print(f"x2* = {prob.get_val('x2')[0]:.6f}")
     print(f"f*  = {prob.get_val('f')[0]:.6f}")
     print(f"Constraint (should be ≤ 0): {-prob.get_val('x1')[0] - prob.get_val('x2')[0]:.6f}")
     print(f"CPU time: {end_time - start_time:.6f} seconds")
+    print(f"Constraint function evaluations: {constraint_comp.get_eval_count()}")
 
