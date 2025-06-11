@@ -5,7 +5,7 @@ from openaerostruct.meshing.mesh_generator import generate_mesh
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from problem_3c_2 import LiftDragRatio
+from problem_3c import LiftDragRatio
 
 def calculate_flight_conditions():
     """Calculate flight conditions from cruise speed and altitude"""
@@ -189,7 +189,7 @@ def create_problem(surface, flight_conditions, design_vars):
     prob.model.add_objective(point_name + ".wing_perf.CD", scaler=1e4)
 
     # Additional aerodynamic efficiency constraints
-    prob.model.add_constraint("L_over_D", lower=8.0)
+    prob.model.add_constraint("L_over_D", lower=10)
     if "chord" in design_vars:
         prob.model.add_constraint(point_name + ".wing.S_ref", equals=16.2)
 
