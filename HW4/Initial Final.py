@@ -31,10 +31,10 @@ lower_x = lower_x[ix_start:ix_end]
 lower_y = lower_y[ix_start:ix_end]
 
 # Wing and tail have he same airfoil
-upper_x2 = upper_x,
-lower_x2 = lower_x,
-upper_y2 = upper_y,
-lower_y2 = lower_y,
+upper_x2 = upper_x
+lower_x2 = lower_x
+upper_y2 = upper_y
+lower_y2 = lower_y
 
 # docs checkpoint 2
 b= 11.63
@@ -70,7 +70,7 @@ surf_dict1 = {
     "twist_cp": np.array([0, 0, 0, 0]),  # [deg]
     "spar_thickness_cp": np.array([0.0035, 0.0035, 0.0035, 00.0035]),  # [m]
     "skin_thickness_cp": np.array([0.0035, 0.0035, 0.0035, 0.0035]),  # [m]
-    "t_over_c_cp": np.array([0.12, 0.12, 0.12, 0.12]),  # N TENHO A CERTEZA DOQ É ISTO
+    "t_over_c_cp": np.array([0.12, 0.12, 0.12, 0.12]),  #local thickness-to-chord ratio control point
     "original_wingbox_airfoil_t_over_c": 0.137,
     "taper": 0.6, 
     "chord_cp":  np.array([1, 1, 1, 1]),
@@ -337,8 +337,8 @@ prob.model.add_design_var("tail.twist_cp", lower=-15.0, upper=15.0, scaler=0.1)
 # docs checkpoint 21
 
 #prob.model.add_constraint("wing.twist_cp", indices=[3], lower=0, upper=0)     
-prob.model.add_constraint("AS_point_0.wing_perf.Cl", upper=0.6)            
-prob.model.add_constraint("AS_point_1.wing_perf.Cl", upper=0.6)            #1,2
+prob.model.add_constraint("AS_point_0.wing_perf.Cl", upper=1.8407)            
+prob.model.add_constraint("AS_point_1.wing_perf.Cl", upper=1.8407)            #1,2
 prob.model.add_constraint("AS_point_0.L_equals_W", equals=0.0)           
 prob.model.add_constraint("AS_point_1.L_equals_W", equals=0.0)           #1,2
 
@@ -347,15 +347,15 @@ prob.model.add_constraint("AS_point_0.wing_perf.failure", upper=0.0)     #1,3   
 prob.model.add_constraint("AS_point_1.wing_perf.failure", upper=0.0)     #1,2
 #prob.model.add_constraint("AS_point_0.tail_perf.failure", upper=0.0)     #1,3    tem de estar na segunda otimização
 #prob.model.add_constraint("AS_point_1.tail_perf.failure", upper=0.0)     #1,2
-prob.model.add_constraint("AS_point_0.wing_perf.S_ref", lower=60, upper=70)  #1
-prob.model.add_constraint("AS_point_1.wing_perf.S_ref", lower=60, upper=70)  #1
+prob.model.add_constraint("AS_point_0.wing_perf.S_ref", lower=10, upper=14)  #1
+prob.model.add_constraint("AS_point_1.wing_perf.S_ref", lower=10, upper=14)  #1
 # docs checkpoint 23
 
 prob.model.add_constraint("fuel_vol_delta.fuel_vol_delta", lower=0.0)
 
 # docs checkpoint 24
 
-prob.model.add_design_var("fuel_mass", lower=0.0, upper=2e5, scaler=1e-5)
+prob.model.add_design_var("fuel_mass", lower=0.0, upper=2e3, scaler=1e-5)
 prob.model.add_constraint("fuel_diff", equals=0.0)
 
 prob.model.add_constraint("AS_point_0.CM", lower=-0.0001, upper=0.0001)
@@ -422,10 +422,10 @@ print("Cruise CL tail is",prob["AS_point_0.tail_perf.CL"])
 print("Maneuver CL is",prob["AS_point_1.wing_perf.CL"])
 print("Wing span is",prob["wing.geometry.span"],"[m]")
 print("Wing chord is",prob["wing.geometry.chord_cp"],"[m]")
-print("Wing twist is",prob["wing.geometry.twist_cp"],"[º]")
+print("Wing twist is",prob["wing.twist_cp"],"[º]")
 print("Tail span is",prob["tail.geometry.span"],"[m]")
 print("Tail chord is",prob["tail.geometry.chord_cp"],"[m]")
-print("Tail twist is",prob["tail.geometry.twist_cp"],"[º]")
+print("Tail twist is",prob["tail.twist_cp"],"[º]")
 print("Alpha cruise is",prob["alpha"],"[º]")
 print("Alpha maneuver is",prob["alpha_maneuver"],"[º]")
 print("CM_0 is " ,prob["AS_point_0.CM"][1])
@@ -437,7 +437,7 @@ print("Cruise L is",prob["AS_point_0.total_perf.L"])
 # docs checkpoint 28
 
 # Instantiate your CaseReader
-cr = om.CaseReader("aerostrf2.db")
+cr = om.CaseReader("./Initial Final_out/aerostrf2.db")
 
 # Get driver cases (do not recurse to system/solver cases)
 driver_cases = cr.get_cases('driver', recurse=False)
