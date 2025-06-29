@@ -22,6 +22,14 @@ lower_x = np.array([0.00000, 0.00107, 0.00428, 0.00961, 0.01704, 0.02653, 0.0380
 lower_y = np.array([0.00000, -0.00232, -0.00566, -0.00995, -0.01254, -0.01537, -0.01698, -0.01887, -0.01992, -0.02122,-0.02180, -0.02256, -0.02263, -0.02277, -0.02220, -0.02161, -0.02034, -0.01895, -0.01688, -0.01460,-0.01167, -0.00848, -0.00486, -0.00103,  0.00307,  0.00716,  0.01112,  0.01475,  0.01813,  0.02098, 0.02345,  0.02530,  0.02668,  0.02745,  0.02768,  0.02729,  0.02631,  0.02479,  0.02284,  0.02052, 0.01794,  0.01514,  0.01219,  0.00921,  0.00630,  0.00373,  0.00169,  0.00040,  0.00000], dtype="complex128")
 # fmt: on
 
+# Keep only the section 0.1 to 0.6 chord, 18 points
+ix_start, ix_end = 10, 34  # or adjust as needed
+
+upper_x = upper_x[ix_start:ix_end]
+upper_y = upper_y[ix_start:ix_end]
+lower_x = lower_x[ix_start:ix_end]
+lower_y = lower_y[ix_start:ix_end]
+
 # Wing and tail have he same airfoil
 upper_x2 = upper_x,
 lower_x2 = lower_x,
@@ -183,7 +191,7 @@ indep_var_comp.add_output("speed_of_sound", val=np.array([324.3247, 324.3247]), 
 
 indep_var_comp.add_output("CT", val=0.0000569, units="1/s") 
 indep_var_comp.add_output("R", val=1730e3, units="m") 
-indep_var_comp.add_output("W0_comp", val=1310, units="kg") 
+indep_var_comp.add_output("W0", val=1310, units="kg") 
 
 indep_var_comp.add_output("load_factor", val=np.array([1.0, 2]))
 indep_var_comp.add_output("alpha", val=0.0, units="deg")
@@ -236,9 +244,6 @@ for i in range(2):
     prob.model.connect("load_factor", point_name + ".load_factor", src_indices=[i])
     prob.model.connect("fuel_mass", point_name + ".total_perf.L_equals_W.fuelburn")
     prob.model.connect("fuel_mass", point_name + ".total_perf.CG.fuelburn")
-   
-    
-   
 
     # docs checkpoint 16
 
@@ -278,11 +283,7 @@ for i in range(2):
 
         prob.model.connect(name + ".spar_thickness", com_name + "spar_thickness")
         prob.model.connect(name + ".t_over_c", com_name + "t_over_c")
-        
-        if name=="tail":
-            coupled_name = point_name + ".coupled." + name
-            prob.model.connect("point_masses", coupled_name + ".point_masses")
-            prob.model.connect("point_mass_locations", coupled_name + ".point_mass_locations")
+
 
 
 # docs checkpoint 17
@@ -332,7 +333,6 @@ prob.model.add_design_var("tail.twist_cp", lower=-15.0, upper=15.0, scaler=0.1)
 #prob.model.add_constraint("AS_point_1.tail_perf.S_ref", equals=14)
 #prob.model.add_design_var("tail.spar_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)   #1
 #prob.model.add_design_var("tail.skin_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)   #1
-
 
 # docs checkpoint 21
 
