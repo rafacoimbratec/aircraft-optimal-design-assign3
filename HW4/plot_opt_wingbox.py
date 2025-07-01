@@ -38,7 +38,7 @@ class Display(object):
         try:
             self.zoom_scale = args[2]
         except IndexError:
-            self.zoom_scale = 2.8
+            self.zoom_scale = 1.5
 
         self.root = Tk.Tk()
         self.root.wm_title("Viewer")

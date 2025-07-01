@@ -68,13 +68,14 @@ surf_dict1 = {
     "data_y_lower": lower_y,
     
     "twist_cp": np.array([0, 0, 0, 0]),  # [deg]
-    "spar_thickness_cp": np.array([0.0035, 0.0035, 0.0035, 00.0035]),  # [m]
+    "spar_thickness_cp": np.array([0.0035, 0.0035, 0.0035, 0.0035]),  # [m]
     "skin_thickness_cp": np.array([0.0035, 0.0035, 0.0035, 0.0035]),  # [m]
     "t_over_c_cp": np.array([0.12, 0.12, 0.12, 0.12]),  #local thickness-to-chord ratio control point
     "original_wingbox_airfoil_t_over_c": 0.137,
     "taper": 0.6, 
     "chord_cp":  np.array([1, 1, 1, 1]),
     "span": 11.63, 
+    "dihedral": 5.0,
     
     # Aerodynamic deltas.
     # These CL0 and CD0 values are added to the CL and CD
@@ -115,7 +116,9 @@ mesh_dict2 = {
     "symmetry": True,
     "chord_cos_spacing": 0,
     "span_cos_spacing": 0,
+    "root_chord": 1,
     "offset": np.array([4.776, 0.000, 1.642])
+    
 }
 
 mesh2 = generate_mesh(mesh_dict2)
@@ -135,10 +138,11 @@ surf_dict2 = {
     "twist_cp": np.array([0]),  # [deg]
     "spar_thickness_cp": np.array([0.0035]),  # [m]
     "skin_thickness_cp": np.array([0.0035]),  # [m]
-    "t_over_c_cp": np.array([0.12]), # N TENHO A CERTEZA DOQ É ISTO
+    "t_over_c_cp": np.array([0.12]), 
     "original_wingbox_airfoil_t_over_c": 0.137,
-    "chord_cp": np.array([1.75]),
-    "span":8.54,
+    "taper": 0.54, 
+    "chord_cp":  np.array([1, 1, 1, 1]),
+    "span":3.44,
     "sweep":14,
     
     # Aerodynamic deltas.
@@ -403,6 +407,7 @@ print("Maneuver CL is",prob["AS_point_1.wing_perf.CL"])
 print("Wing span is",prob["wing.geometry.span"],"[m]")
 print("Wing chord is",prob["wing.geometry.chord_cp"],"[m]")
 print("Wing twist is",prob["wing.twist_cp"],"[º]")
+print("Tail sweep is",prob["tail.sweep"],"[º]")
 print("Tail span is",prob["tail.geometry.span"],"[m]")
 print("Tail chord is",prob["tail.geometry.chord_cp"],"[m]")
 print("Tail twist is",prob["tail.twist_cp"],"[º]")
