@@ -203,9 +203,6 @@ indep_var_comp.add_output("fuel_mass", val=124, units="kg")
 
 prob.model.add_subsystem("prob_vars", indep_var_comp, promotes=["*"])
 
-# everything before this point has been updated to use the new aircraft
-
-
 # Loop over each surface in the surfaces list
 for surface in surfaces:
     # Get the surface name and create a group to contain components
@@ -217,8 +214,6 @@ for surface in surfaces:
     # Add groups to the problem with the name of the surface.
     prob.model.add_subsystem(name, aerostruct_group)
 
-# docs checkpoint 14
-
 # Loop through and add a certain number of aerostruct points
 for i in range(2):
     point_name = "AS_point_{}".format(i)
@@ -228,8 +223,6 @@ for i in range(2):
     AS_point = AerostructPoint(surfaces=surfaces, internally_connect_fuelburn=False)
 
     prob.model.add_subsystem(point_name, AS_point)
-
-    # docs checkpoint 15
 
     # Connect flow properties to the analysis point
     prob.model.connect("v", point_name + ".v", src_indices=[i])
@@ -244,8 +237,6 @@ for i in range(2):
     prob.model.connect("load_factor", point_name + ".load_factor", src_indices=[i])
     prob.model.connect("fuel_mass", point_name + ".total_perf.L_equals_W.fuelburn")
     prob.model.connect("fuel_mass", point_name + ".total_perf.CG.fuelburn")
-
-    # docs checkpoint 16
 
     for surface in surfaces:
         name = surface["name"]
@@ -284,14 +275,8 @@ for i in range(2):
         prob.model.connect(name + ".spar_thickness", com_name + "spar_thickness")
         prob.model.connect(name + ".t_over_c", com_name + "t_over_c")
 
-
-
-# docs checkpoint 17
-
 prob.model.connect("alpha", "AS_point_0" + ".alpha")
 prob.model.connect("alpha_maneuver", "AS_point_1" + ".alpha")
-
-# docs checkpoint 18
 
 # Here we add the fuel volume constraint componenet to the model
 prob.model.add_subsystem("fuel_vol_delta", WingboxFuelVolDelta(surface=surface))
@@ -305,13 +290,9 @@ if surf_dict1["distributed_fuel_weight"]:
     prob.model.connect("wing.struct_setup.fuel_vols", "AS_point_1.coupled.wing.struct_states.fuel_vols")
     prob.model.connect("fuel_mass", "AS_point_1.coupled.wing.struct_states.fuel_mass")
 
-# docs checkpoint 19
-
 comp = om.ExecComp("fuel_diff = (fuel_mass - fuelburn) / fuelburn", units="kg")
 prob.model.add_subsystem("fuel_diff", comp, promotes_inputs=["fuel_mass"], promotes_outputs=["fuel_diff"])
 prob.model.connect("AS_point_0.fuelburn", "fuel_diff.fuelburn")
-
-# docs checkpoint 20
 
 prob.model.add_objective("AS_point_0.fuelburn", scaler=1e-5)
 
@@ -334,26 +315,20 @@ prob.model.add_design_var("tail.twist_cp", lower=-15.0, upper=15.0, scaler=0.1)
 #prob.model.add_design_var("tail.spar_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)   #1
 #prob.model.add_design_var("tail.skin_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)   #1
 
-# docs checkpoint 21
-
 #prob.model.add_constraint("wing.twist_cp", indices=[3], lower=0, upper=0)     
 prob.model.add_constraint("AS_point_0.wing_perf.Cl", upper=1.8407)            
 prob.model.add_constraint("AS_point_1.wing_perf.Cl", upper=1.8407)            #1,2
 prob.model.add_constraint("AS_point_0.L_equals_W", equals=0.0)           
 prob.model.add_constraint("AS_point_1.L_equals_W", equals=0.0)           #1,2
 
-# docs checkpoint 22
 prob.model.add_constraint("AS_point_0.wing_perf.failure", upper=0.0)     #1,3    tem de estar na segunda otimização
 prob.model.add_constraint("AS_point_1.wing_perf.failure", upper=0.0)     #1,2
 #prob.model.add_constraint("AS_point_0.tail_perf.failure", upper=0.0)     #1,3    tem de estar na segunda otimização
 #prob.model.add_constraint("AS_point_1.tail_perf.failure", upper=0.0)     #1,2
 prob.model.add_constraint("AS_point_0.wing_perf.S_ref", lower=10, upper=14)  #1
 prob.model.add_constraint("AS_point_1.wing_perf.S_ref", lower=10, upper=14)  #1
-# docs checkpoint 23
 
 prob.model.add_constraint("fuel_vol_delta.fuel_vol_delta", lower=0.0)
-
-# docs checkpoint 24
 
 prob.model.add_design_var("fuel_mass", lower=0.0, upper=2e3, scaler=1e-5)
 prob.model.add_constraint("fuel_diff", equals=0.0)
@@ -361,17 +336,11 @@ prob.model.add_constraint("fuel_diff", equals=0.0)
 prob.model.add_constraint("AS_point_0.CM", lower=-0.0001, upper=0.0001)
 #prob.model.add_constraint("AS_point_1.CM", lower=-0.0001, upper=0.0001)
 
-
-# docs checkpoint 25
-
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options["optimizer"] = "SLSQP"
 prob.driver.options["tol"] = 1e-6
 prob.driver.options["invalid_desvar_behavior"] = "ignore"
 prob.driver.options['maxiter'] = 1000
-
-
-# docs checkpoint 26
 
 recorder = om.SqliteRecorder("aerostrf2.db")
 prob.driver.add_recorder(recorder)
@@ -383,8 +352,6 @@ prob.driver.recording_options["record_objectives"] = True
 prob.driver.recording_options["record_constraints"] = True
 prob.driver.recording_options["record_desvars"] = True
 prob.driver.recording_options["record_inputs"] = True
-
-# docs checkpoint 27
 
 # Set up the problem
 prob.setup()
@@ -401,6 +368,19 @@ prob.model.AS_point_1.coupled.linear_solver = om.LinearBlockGS(iprint=0, maxiter
 # prob.check_partials(form='central', compact_print=True)
 
 prob.run_driver()
+
+# === Export optimized wing surface to .pkl ===
+optimized_surface = surf_dict1.copy()
+optimized_surface["mesh"] = prob.get_val("wing.mesh")
+optimized_surface["twist_cp"] = prob.get_val("wing.twist_cp")
+optimized_surface["chord_cp"] = prob.get_val("wing.geometry.chord_cp")
+optimized_surface["t_over_c_cp"] = prob.get_val("wing.geometry.t_over_c_cp")
+optimized_surface["spar_thickness_cp"] = prob.get_val("wing.spar_thickness_cp")
+optimized_surface["skin_thickness_cp"] = prob.get_val("wing.skin_thickness_cp")
+import pickle
+
+with open("optimized_wing.pkl", "wb") as f:
+    pickle.dump(optimized_surface, f)
 
 print("The fuel burn value is", prob["AS_point_0.fuelburn"][0], "[kg]")
 print(
@@ -434,7 +414,6 @@ print("Cg is ",prob["AS_point_0.cg"])
 
 print("Cruise D is",prob["AS_point_0.total_perf.D"])
 print("Cruise L is",prob["AS_point_0.total_perf.L"])
-# docs checkpoint 28
 
 # Instantiate your CaseReader
 cr = om.CaseReader("./Initial Final_out/aerostrf2.db")
