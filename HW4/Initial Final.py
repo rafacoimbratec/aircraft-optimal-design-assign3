@@ -22,8 +22,8 @@ lower_x = np.array([0.00000, 0.00107, 0.00428, 0.00961, 0.01704, 0.02653, 0.0380
 lower_y = np.array([0.00000, -0.00232, -0.00566, -0.00995, -0.01254, -0.01537, -0.01698, -0.01887, -0.01992, -0.02122,-0.02180, -0.02256, -0.02263, -0.02277, -0.02220, -0.02161, -0.02034, -0.01895, -0.01688, -0.01460,-0.01167, -0.00848, -0.00486, -0.00103,  0.00307,  0.00716,  0.01112,  0.01475,  0.01813,  0.02098, 0.02345,  0.02530,  0.02668,  0.02745,  0.02768,  0.02729,  0.02631,  0.02479,  0.02284,  0.02052, 0.01794,  0.01514,  0.01219,  0.00921,  0.00630,  0.00373,  0.00169,  0.00040,  0.00000], dtype="complex128")
 # fmt: on
 
-# Keep only the section 0.1 to 0.6 chord, 18 points
-ix_start, ix_end = 10, 34  # or adjust as needed
+# trim section of the airfoil coordinates
+ix_start, ix_end = 2, 50  # adjust as needed
 
 upper_x = upper_x[ix_start:ix_end]
 upper_y = upper_y[ix_start:ix_end]
@@ -36,7 +36,7 @@ lower_x2 = lower_x
 upper_y2 = upper_y
 lower_y2 = lower_y
 
-# docs checkpoint 2
+# Wing basic parameters
 b= 11.63
 AR= 10.223
 S= 13.244
@@ -56,12 +56,11 @@ mesh_dict = {
 mesh = generate_mesh(mesh_dict)
 surf_dict1 = {
     # WING definition
-    "name": "wing",  # give the surface some name
+    "name": "wing",  
     "symmetry": True,  # if True, model only one half of the lifting surface
-    "S_ref_type": "wetted",  # how we compute the wing area,
-    # can be 'wetted' or 'projected'
+    "S_ref_type": "wetted",  
     "mesh": mesh,
-    "fem_model_type": "wingbox",  # 'wingbox' or 'tube'
+    "fem_model_type": "wingbox",  
     "data_x_upper": upper_x,
     "data_x_lower": lower_x,
     "data_y_upper": upper_y,
@@ -84,12 +83,11 @@ surf_dict1 = {
     # They can be used to account for things that are not included, such as contributions from the fuselage, camber, etc.
     "CL0": 0.9255,  # CL delta 
     "CD0": 0.007739,  # CD delta 
-    "with_viscous": True,  # if true, compute viscous drag
-    "with_wave": True,  # if true, compute wave drag
+    "with_viscous": True,  # compute viscous drag
+    "with_wave": True,  # compute wave drag
     # Airfoil properties for viscous drag calculation
-    "k_lam": 0.05,  # fraction of chord with laminar
-    # flow, used for viscous drag
-    "c_max_t": 0.309,  # chordwise location of maximum thickness
+    "k_lam": 0.05,  # fraction of chord with laminar flow, used for viscous drag
+    "c_max_t": 0.309,  # chordwise location of max thickness
     "sweep": 1,
    
     # Structural values are based on GFRP
@@ -103,9 +101,8 @@ surf_dict1 = {
    
     "struct_weight_relief": True,
     "distributed_fuel_weight": True,
-    #"n_point_masses": 1,  # number of point masses in the system; in this case, the engine (omit option if no point masses)
  
-    "fuel_density": 800.0,  # [kg/m^3] fuel density (only needed if the fuel-in-wing volume constraint is used)
+    "fuel_density": 800.0,  # [kg/m^3] fuel density 
     "Wf_reserve": 0,  # [kg] reserve fuel mass
 }
 
@@ -124,12 +121,11 @@ mesh_dict2 = {
 mesh2 = generate_mesh(mesh_dict2)
 surf_dict2 = {
     # TAIL definition
-    "name": "tail",  # give the surface some name
-    "symmetry": True,  # if True, model only one half of the lifting surface
-    "S_ref_type": "projected",  # how we compute the wing area,
-    # can be 'wetted' or 'projected'
+    "name": "tail", 
+    "symmetry": True,  
+    "S_ref_type": "projected", 
     "mesh": mesh2,
-    "fem_model_type": "wingbox",  # 'wingbox' or 'tube'
+    "fem_model_type": "wingbox", 
     "data_x_upper": upper_x2,
     "data_x_lower": lower_x2,
     "data_y_upper": upper_y2,
@@ -146,23 +142,17 @@ surf_dict2 = {
     "sweep":14,
     
     # Aerodynamic deltas.
-    # These CL0 and CD0 values are added to the CL and CD
-    # obtained from aerodynamic analysis of the surface to get
-    # the total CL and CD.
-    # These CL0 and CD0 values do not vary wrt alpha.
-    # They can be used to account for things that are not included, such as contributions from the fuselage, camber, etc.
     "CL0": 0.0,  # CL delta
     "CD0": 0.006,  # CD delta 
-    "with_viscous": True,  # if true, compute viscous drag
-    "with_wave": True,  # if true, compute wave drag
+    "with_viscous": True,  # compute viscous drag
+    "with_wave": True,  # compute wave drag
     # Airfoil properties for viscous drag calculation
-    "k_lam": 0.05,  # fraction of chord with laminar
-    # flow, used for viscous drag
+    "k_lam": 0.05,  # fraction of chord with laminar flow
     "c_max_t": 0.309,  # chordwise location of maximum thickness
-    # docs checkpoint 6
-    # Structural values are based on aluminum 7075
+    
+    # Structural values are based on GFRP
     "E": 39e9,  # [Pa] Young's modulus
-    "G": 3.8e9,  # [Pa] shear modulus (calculated using E and the Poisson's ratio here)
+    "G": 3.8e9,  # [Pa] shear modulus 
     "yield": (2e9 / 1.25),  # [Pa] allowable yield stress
     "mrho": 2.1e3,  # [kg/m^3] material density
     "strength_factor_for_upper_skin": 1.0,  # the yield stress is multiplied by this factor for the upper skin
@@ -170,15 +160,15 @@ surf_dict2 = {
     "exact_failure_constraint": True,  # if false, use KS function
 
     "struct_weight_relief": True,
-    "distributed_fuel_weight": False,  # number of point masses in the system; in this case, the engine (omit option if no point masses)
-    #"n_point_masses": 1,  # number of point masses in the system; in this case, the engine (no engine on the tail of our aircraft)
+    "distributed_fuel_weight": False,  
+   
     "fuel_density": 800.0,  # [kg/m^3] fuel density (only needed if the fuel-in-wing volume constraint is used)
     "Wf_reserve": 0.0,  # [kg] reserve fuel mass
 
 }
 
 surfaces = [surf_dict1,surf_dict2]
-#surfaces = [surf_dict1]
+
 
 # Create the problem and assign the model group
 prob = om.Problem()
@@ -191,13 +181,11 @@ indep_var_comp.add_output("re",val=np.array([3e7,3e7]),units="1/m")
 indep_var_comp.add_output("rho", val=np.array([0.79786, 0.79786]), units="kg/m**3")
 indep_var_comp.add_output("speed_of_sound", val=np.array([324.3247, 324.3247]), units="m/s")
 
-# everything before this point has been updated to use the new airfoil coordinates and mesh generation
-
 indep_var_comp.add_output("CT", val=0.0000569, units="1/s") 
 indep_var_comp.add_output("R", val=1730e3, units="m") 
 indep_var_comp.add_output("W0", val=1310, units="kg") 
 
-indep_var_comp.add_output("load_factor", val=np.array([1.0, 2]))
+indep_var_comp.add_output("load_factor", val=np.array([1.0, 2]))  # n = 2 for maneuver 
 indep_var_comp.add_output("alpha", val=0.0, units="deg")
 indep_var_comp.add_output("alpha_maneuver", val=4.0, units="deg")
 
@@ -282,7 +270,7 @@ for i in range(2):
 prob.model.connect("alpha", "AS_point_0" + ".alpha")
 prob.model.connect("alpha_maneuver", "AS_point_1" + ".alpha")
 
-# Here we add the fuel volume constraint componenet to the model
+# Add the fuel volume constraint componenet to the model
 prob.model.add_subsystem("fuel_vol_delta", WingboxFuelVolDelta(surface=surface))
 prob.model.connect("wing.struct_setup.fuel_vols", "fuel_vol_delta.fuel_vols")
 prob.model.connect("AS_point_0.fuelburn", "fuel_vol_delta.fuelburn")
@@ -300,37 +288,35 @@ prob.model.connect("AS_point_0.fuelburn", "fuel_diff.fuelburn")
 
 prob.model.add_objective("AS_point_0.fuelburn", scaler=1e-5)
 
-#prob.model.add_design_var("alpha", lower=-15.0, upper=15.0) 
 prob.model.add_design_var("wing.twist_cp", lower=-15.0, upper=15.0, scaler=0.1)   
-prob.model.add_design_var("wing.sweep", lower=0.0, upper=60.0, scaler=0.1)                    #1
-prob.model.add_design_var("wing.geometry.span", upper=30.0, scaler=0.1)            #1
-prob.model.add_design_var("wing.geometry.chord_cp", lower=0.01, upper=6.0)       #1
-prob.model.add_design_var("wing.spar_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)  #1
-prob.model.add_design_var("wing.skin_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)  #1
-prob.model.add_design_var("wing.geometry.t_over_c_cp", lower=0.07, upper=0.2, scaler=10.0)
+prob.model.add_design_var("wing.sweep", lower=0.0, upper=60.0, scaler=0.1)                    
+prob.model.add_design_var("wing.geometry.span", upper=30.0, scaler=0.1)           
+prob.model.add_design_var("wing.geometry.chord_cp", lower=0.01, upper=6.0)       
+prob.model.add_design_var("wing.spar_thickness_cp", lower=0.002, upper=0.1, scaler=1e2)  
+prob.model.add_design_var("wing.skin_thickness_cp", lower=0.002, upper=0.1, scaler=1e2)  
+prob.model.add_design_var("wing.geometry.t_over_c_cp", lower=0.05, upper=0.3, scaler=10.0)
 
-prob.model.add_design_var("alpha_maneuver", lower=-10.0, upper=15, scaler=0.1)                #1,2
+prob.model.add_design_var("alpha_maneuver", lower=-10.0, upper=15, scaler=0.1)                
 
 prob.model.add_design_var("tail.twist_cp", lower=-15.0, upper=15.0, scaler=0.1)  
-#prob.model.add_design_var("tail.geometry.span", lower=5, upper=11)
-#prob.model.add_design_var("tail.geometry.chord_cp", lower=0.001, upper=2)
-#prob.model.add_constraint("AS_point_0.tail_perf.S_ref", equals=14)
-#prob.model.add_constraint("AS_point_1.tail_perf.S_ref", equals=14)
-#prob.model.add_design_var("tail.spar_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)   #1
-#prob.model.add_design_var("tail.skin_thickness_cp", lower=0.003, upper=0.1, scaler=1e2)   #1
+prob.model.add_design_var("tail.geometry.span", lower=2, upper=5)
+prob.model.add_design_var("tail.geometry.chord_cp", lower=0.001, upper=2)
+prob.model.add_design_var("tail.sweep", lower=0.0, upper=60.0, scaler=0.1)                    
 
-#prob.model.add_constraint("wing.twist_cp", indices=[3], lower=0, upper=0)     
-prob.model.add_constraint("AS_point_0.wing_perf.Cl", upper=1.8407)            
-prob.model.add_constraint("AS_point_1.wing_perf.Cl", upper=1.8407)            #1,2
+#prob.model.add_design_var("tail.spar_thickness_cp", lower=0.002, upper=0.1, scaler=1e2)   
+#prob.model.add_design_var("tail.skin_thickness_cp", lower=0.002, upper=0.1, scaler=1e2)   
+   
+prob.model.add_constraint("AS_point_0.wing_perf.Cl", upper=0.6)            
+prob.model.add_constraint("AS_point_1.wing_perf.Cl", upper=0.6)            
 prob.model.add_constraint("AS_point_0.L_equals_W", equals=0.0)           
-prob.model.add_constraint("AS_point_1.L_equals_W", equals=0.0)           #1,2
+prob.model.add_constraint("AS_point_1.L_equals_W", equals=0.0)           
 
-prob.model.add_constraint("AS_point_0.wing_perf.failure", upper=0.0)     #1,3    tem de estar na segunda otimização
-prob.model.add_constraint("AS_point_1.wing_perf.failure", upper=0.0)     #1,2
-#prob.model.add_constraint("AS_point_0.tail_perf.failure", upper=0.0)     #1,3    tem de estar na segunda otimização
-#prob.model.add_constraint("AS_point_1.tail_perf.failure", upper=0.0)     #1,2
-prob.model.add_constraint("AS_point_0.wing_perf.S_ref", lower=10, upper=14)  #1
-prob.model.add_constraint("AS_point_1.wing_perf.S_ref", lower=10, upper=14)  #1
+prob.model.add_constraint("AS_point_0.wing_perf.failure", upper=0.0)     
+prob.model.add_constraint("AS_point_1.wing_perf.failure", upper=0.0)     
+prob.model.add_constraint("AS_point_0.tail_perf.failure", upper=0.0)     
+prob.model.add_constraint("AS_point_1.tail_perf.failure", upper=0.0)     
+prob.model.add_constraint("AS_point_0.wing_perf.S_ref", lower=10, upper=14)  
+prob.model.add_constraint("AS_point_1.wing_perf.S_ref", lower=10, upper=14)  
 
 prob.model.add_constraint("fuel_vol_delta.fuel_vol_delta", lower=0.0)
 
@@ -338,53 +324,40 @@ prob.model.add_design_var("fuel_mass", lower=0.0, upper=2e3, scaler=1e-5)
 prob.model.add_constraint("fuel_diff", equals=0.0)
 
 prob.model.add_constraint("AS_point_0.CM", lower=-0.0001, upper=0.0001)
-#prob.model.add_constraint("AS_point_1.CM", lower=-0.0001, upper=0.0001)
+
 
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options["optimizer"] = "SLSQP"
-prob.driver.options["tol"] = 1e-6
+prob.driver.options["tol"] = 1e-8
 prob.driver.options["invalid_desvar_behavior"] = "ignore"
 prob.driver.options['maxiter'] = 1000
+prob.driver.options["disp"] = True
 
+# db file for recording (used on plot_opt_wingbox)
 recorder = om.SqliteRecorder("aerostrf2.db")
 prob.driver.add_recorder(recorder)
 
-# We could also just use prob.driver.recording_options['includes']=['*'] here, but for large meshes the database file becomes extremely large. So we just select the variables we need.
 prob.driver.recording_options["includes"] = ['*']
-
 prob.driver.recording_options["record_objectives"] = True
 prob.driver.recording_options["record_constraints"] = True
 prob.driver.recording_options["record_desvars"] = True
 prob.driver.recording_options["record_inputs"] = True
 
+
 # Set up the problem
 prob.setup()
 
-# change linear solver for aerostructural coupled adjoint
-prob.model.AS_point_0.coupled.linear_solver = om.LinearBlockGS(iprint=0, maxiter=100, use_aitken=True)
-prob.model.AS_point_1.coupled.linear_solver = om.LinearBlockGS(iprint=0, maxiter=100, use_aitken=True)
+# linear and non linear solvers for aerostructural coupled adjoint
+prob.model.AS_point_0.coupled.linear_solver = om.LinearBlockGS(iprint=0, maxiter=200, use_aitken=True)
+prob.model.AS_point_1.coupled.linear_solver = om.LinearBlockGS(iprint=0, maxiter=200, use_aitken=True)
 
-#prob.model.AS_point_0.coupled.nonlinear_solver = om.NonlinearBlockGS(iprint=0, maxiter=500, use_aitken=True)
+prob.model.AS_point_0.coupled.nonlinear_solver = om.NonlinearBlockGS(iprint=0, maxiter=500, use_aitken=True)
 #prob.model.AS_point_1.coupled.nonlinear_solver = om.NonlinearBlockGS(iprint=0, maxiter=500, use_aitken=True)
 
-# om.view_model(prob)
-
-# prob.check_partials(form='central', compact_print=True)
 
 prob.run_driver()
 
-# === Export optimized wing surface to .pkl ===
-optimized_surface = surf_dict1.copy()
-optimized_surface["mesh"] = prob.get_val("wing.mesh")
-optimized_surface["twist_cp"] = prob.get_val("wing.twist_cp")
-optimized_surface["chord_cp"] = prob.get_val("wing.geometry.chord_cp")
-optimized_surface["t_over_c_cp"] = prob.get_val("wing.geometry.t_over_c_cp")
-optimized_surface["spar_thickness_cp"] = prob.get_val("wing.spar_thickness_cp")
-optimized_surface["skin_thickness_cp"] = prob.get_val("wing.skin_thickness_cp")
-import pickle
-
-with open("optimized_wing.pkl", "wb") as f:
-    pickle.dump(optimized_surface, f)
+print(prob.driver.result)
 
 print("The fuel burn value is", prob["AS_point_0.fuelburn"][0], "[kg]")
 print(
@@ -397,38 +370,42 @@ print(
     prob["tail.structural_mass"][0] / surf_dict2["wing_weight_ratio"],
     "[kg]",
 )
-print("The total mass is", prob["AS_point_0.total_perf.total_weight"]/9.81, "[kg]")
-print("Wing area is",prob["AS_point_0.wing_perf.S_ref"], "[m^2]")
-print("Cruise CD is",prob["AS_point_0.wing_perf.CD"])
+print("\n The total mass is", prob["AS_point_0.total_perf.total_weight"]/9.81, "[kg]")
+
+print("\n Cruise CD is",prob["AS_point_0.wing_perf.CD"])
 print("Cruise CL is",prob["AS_point_0.wing_perf.Cl"])
 print("Cruise CD tail is",prob["AS_point_0.tail_perf.CD"])
 print("Cruise CL tail is",prob["AS_point_0.tail_perf.CL"])
 print("Maneuver CL is",prob["AS_point_1.wing_perf.CL"])
+
+print("\n Wing area is",prob["AS_point_0.wing_perf.S_ref"], "[m^2]")
 print("Wing span is",prob["wing.geometry.span"],"[m]")
 print("Wing chord is",prob["wing.geometry.chord_cp"],"[m]")
 print("Wing twist is",prob["wing.twist_cp"],"[º]")
-print("Tail sweep is",prob["tail.sweep"],"[º]")
+
+print("\n Tail sweep is",prob["tail.sweep"],"[º]")
 print("Tail span is",prob["tail.geometry.span"],"[m]")
 print("Tail chord is",prob["tail.geometry.chord_cp"],"[m]")
 print("Tail twist is",prob["tail.twist_cp"],"[º]")
-print("Alpha cruise is",prob["alpha"],"[º]")
+
+print("\n Alpha cruise is",prob["alpha"],"[º]")
 print("Alpha maneuver is",prob["alpha_maneuver"],"[º]")
-print("CM_0 is " ,prob["AS_point_0.CM"][1])
+
+print("\n CM_0 is " ,prob["AS_point_0.CM"][1])
 print("CM_1 is ",prob["AS_point_1.CM"][1])
 print("Cg is ",prob["AS_point_0.cg"])
 
-print("Cruise D is",prob["AS_point_0.total_perf.D"])
+print("\n Cruise D is",prob["AS_point_0.total_perf.D"])
 print("Cruise L is",prob["AS_point_0.total_perf.L"])
+
 
 # Instantiate your CaseReader
 cr = om.CaseReader("./Initial Final_out/aerostrf2.db")
 
-# Get driver cases (do not recurse to system/solver cases)
+# Get driver cases
 driver_cases = cr.get_cases('driver', recurse=False)
 
 # Plot the path the design variables took to convergence
-# Note that there are five lines in the left plot because "wing.twist_cp"
-# contains five variables that are being optimized
 wingtwist_values = []
 tailtwist_values = []
 cl_values = []
@@ -445,9 +422,12 @@ drag1_values = []
 fuelburn1_values = []
 skin_thic_values = []
 spar_thic_values = []
-span_values = []
-sweep_values = []
-chord_values = []
+Wing_span_values = []
+Wing_sweep_values = []
+Wing_chord_values = []
+Tail_span_values = []
+Tail_sweep_values = []
+Tail_chord_values = []
 #warea_values = []
 
 for case in driver_cases:
@@ -467,41 +447,44 @@ for case in driver_cases:
     fuelburn1_values.append(case['AS_point_1.fuelburn'])
     skin_thic_values.append(case['wing.skin_thickness_cp'])
     spar_thic_values.append(case['wing.spar_thickness_cp'])
-    span_values.append(case['wing.geometry.span'])
-    sweep_values.append(case['wing.sweep'])
-    chord_values.append(case['wing.geometry.chord_cp'])
-    #warea_values.append(case["AS_point_0.wing_perf.S_ref"])
+    Wing_span_values.append(case['wing.geometry.span'])
+    Wing_sweep_values.append(case['wing.sweep'])
+    Wing_chord_values.append(case['wing.geometry.chord_cp'])
+    Tail_span_values.append(case['tail.geometry.span'])
+    Tail_sweep_values.append(case['tail.sweep'])
+    Tail_chord_values.append(case['tail.geometry.chord_cp'])
     
-###################################    
+
+###################################     WING TWIST   
     
 fig, (ax1) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Wing Twist optimization history', fontsize=16)
 
 ax1.plot(np.arange(len(wingtwist_values)), np.array(wingtwist_values))
 ax1.set(xlabel='Iterations', ylabel='Wing Twist cp', title='Optimization History')
 ax1.legend(['cp1', 'cp2','cp3','cp4'])
 ax1.grid()
 
-####################################
+####################################    TAIL TWIST
    
 fig, (ax2) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Tail Twist optimization history', fontsize=16)
 
 ax2.plot(np.arange(len(tailtwist_values)), np.array(tailtwist_values))
 ax2.set(xlabel='Iterations', ylabel='Tail Twist cp', title='Optimization History')
 ax2.legend(['cp1'])
 ax2.grid()
 
-####################################
+####################################    L=W
 
 fig, (ax3) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('L=W optimization history', fontsize=16)
 
 ax3.plot(np.arange(len(lw_values)), np.array(lw_values))
 ax3.plot(np.arange(len(lw1_values)), np.array(lw1_values))
@@ -509,12 +492,12 @@ ax3.set(xlabel='Iterations', ylabel='L=W', title='Optimization History')
 ax3.legend(['cruise', 'maneuver'])
 ax3.grid()
 
-####################################
+####################################    ALPHA
 
 fig, (ax4) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Alpha optimization history', fontsize=16)
 
 ax4.plot(np.arange(len(alpha_values)), np.array(alpha_values))
 ax4.plot(np.arange(len(alpham_values)), np.array(alpham_values))
@@ -522,25 +505,25 @@ ax4.set(xlabel='Iterations', ylabel='alpha', title='Optimization History')
 ax4.legend(['alpha cruise', 'alpha maneuver'])
 ax4.grid()
 
-#####################################
+#####################################   CM
 
 fig, (ax5) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('CM optimization history', fontsize=16)
 
 ax5.plot(np.arange(len(CM_values)), np.array(CM_values))
 #ax5.plot(np.arange(len(CM1_values)), np.array(CM1_values))
-ax5.set(xlabel='Iterations', ylabel='Cm', title='Optimization History')
+ax5.set(xlabel='Iterations', ylabel='CM', title='Optimization History')
 #ax5.legend(['cruise', 'maneuver'])
 ax5.grid()
 
-####################################
+####################################    DRAG
 
 fig, (ax6) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Drag optimization history', fontsize=16)
 
 ax6.plot(np.arange(len(drag_values)), np.array(drag_values))
 #ax6.plot(np.arange(len(drag1_values)), np.array(drag1_values))
@@ -548,111 +531,136 @@ ax6.set(xlabel='Iterations', ylabel='D', title='Optimization History')
 #ax6.legend(['cruise', 'maneuver'])
 ax6.grid()
 
-###################################
+####################################    FUEL BURN
 
 fig, (ax7) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Fuel Burn optimization history', fontsize=16)
 
 ax7.plot(np.arange(len(fuelburn_values)), np.array(fuelburn_values))
-#ax7.plot(np.arange(len(fuelburn1_values)), np.array(fuelburn1_values))
 ax7.set(xlabel='Iterations', ylabel='Objetive Funtion - Fuelburn', title='Optimization History')
 #ax7.legend(['cruise', 'maneuver'])
 ax7.grid()
 
-###################################
+####################################    CRUISE CL     
 
 fig, (ax8) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Cruise CL optimization history', fontsize=16)
 
 ax8.plot(np.arange(len(cl_values)), np.array(cl_values))
 ax8.set(xlabel='Iterations', ylabel='cl cruise', title='Optimization History')
 ax8.legend(['panel 1', 'panel 2', 'panel 3', 'panel 4', 'panel 5', 'panel 6', 'panel 7'])
 ax8.grid()
 
-###################################
+####################################    MANEUVER CL     
 
 fig, (ax9) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Maneuver CL optimization history', fontsize=16)
 
 ax9.plot(np.arange(len(cl1_values)), np.array(cl1_values))
 ax9.set(xlabel='Iterations', ylabel='cl maneuver', title='Optimization History')
 ax9.legend(['panel 1', 'panel 2', 'panel 3', 'panel 4', 'panel 5', 'panel 6', 'panel 7'])
 ax9.grid()
 
-###################################
+####################################    WING SPAR
 
 fig, (ax10) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Wing Spar Thickness optimization history', fontsize=16)
 
 ax10.plot(np.arange(len(spar_thic_values)), np.array(spar_thic_values))
 ax10.set(xlabel='Iterations', ylabel='spar_thickness', title='Optimization History')
 ax10.legend(['cp1', 'cp2','cp3','cp4'])
 ax10.grid()
 
-###################################
+####################################    WING SKIN
 
 fig, (ax11) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Wing Skin Thickness optimization history', fontsize=16)
 
 ax11.plot(np.arange(len(skin_thic_values)), np.array(skin_thic_values))
 ax11.set(xlabel='Iterations', ylabel='skin_thickness', title='Optimization History')
 ax11.legend(['cp1', 'cp2','cp3','cp4'])
 ax11.grid()
 
-###################################
-
-#fig, (ax12) = plt.subplots(1)
-#fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
-
-#fig.suptitle('Function optimization history visualization', fontsize=16)
-
-#ax12.plot(np.arange(len(warea_values)), np.array(warea_values))
-#ax12.set(xlabel='Iterations', ylabel='wing area', title='Optimization History')
-#ax12.grid()
-
-###################################
+####################################    WING SPAN
 
 fig, (ax13) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Wing Span optimization history', fontsize=16)
 
-ax13.plot(np.arange(len(span_values)), np.array(span_values))
+ax13.plot(np.arange(len(Wing_span_values)), np.array(Wing_span_values))
 ax13.set(xlabel='Iterations', ylabel='span', title='Optimization History')
 ax13.grid()
 
-###################################
+####################################    WING SWEEP
 
 fig, (ax14) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Wing Sweep optimization history', fontsize=16)
 
-ax14.plot(np.arange(len(sweep_values)), np.array(sweep_values))
+ax14.plot(np.arange(len(Wing_sweep_values)), np.array(Wing_sweep_values))
 ax14.set(xlabel='Iterations', ylabel='sweep', title='Optimization History')
 ax14.legend(['cp1', 'cp2','cp3','cp4'])
 ax14.grid()
 
-###################################
+####################################    WING CHORD
 
 fig, (ax15) = plt.subplots(1)
 fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
 
-fig.suptitle('Function optimization history visualization', fontsize=16)
+fig.suptitle('Wing Chord optimization history', fontsize=16)
 
-ax15.plot(np.arange(len(chord_values)), np.array(chord_values))
+ax15.plot(np.arange(len(Wing_chord_values)), np.array(Wing_chord_values))
 ax15.set(xlabel='Iterations', ylabel='chord', title='Optimization History')
 ax15.legend(['cp1', 'cp2','cp3','cp4'])
 ax15.grid()
+
+####################################    TAIL SPAN
+
+fig, (ax16) = plt.subplots(1)
+fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
+
+fig.suptitle('Tail Span optimization history', fontsize=16)
+
+ax16.plot(np.arange(len(Tail_span_values)), np.array(Tail_span_values))
+ax16.set(xlabel='Iterations', ylabel='span', title='Optimization History')
+ax16.grid()
+
+####################################    TAIL SWEEP
+
+fig, (ax17) = plt.subplots(1)
+fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
+
+fig.suptitle('Tail Sweep optimization history', fontsize=16)
+
+ax17.plot(np.arange(len(Tail_sweep_values)), np.array(Tail_sweep_values))
+ax17.set(xlabel='Iterations', ylabel='sweep', title='Optimization History')
+ax17.legend(['cp1', 'cp2','cp3','cp4'])
+ax17.grid()
+
+####################################    TAIL CHORD
+
+fig, (ax18) = plt.subplots(1)
+fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=None)
+
+fig.suptitle('Tail Chord optimization history', fontsize=16)
+
+ax18.plot(np.arange(len(Tail_chord_values)), np.array(Tail_chord_values))
+ax18.set(xlabel='Iterations', ylabel='chord', title='Optimization History')
+ax18.legend(['cp1', 'cp2','cp3','cp4'])
+ax18.grid()
+
+##################################
 
 plt.show()
